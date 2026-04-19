@@ -28,15 +28,16 @@ vmec_file_path = "/home/lavan/PHYS525/PHYS525_Project/wout_HSX_ar6.nc"
 # the flare code run here can calculate the magnetic vector B to a fraction of a millimeter at any point
 # within the device using 3D interpolation
 try:
-    B_field = model.load(vmec_file_path)
-    print("Successfully loaded VMEC data.")
+    print("Loading HSX mgrid model...")
+    model.load("HSX/mgrid")
+    print("Successfully loaded MGRID data.")
 except Exception as e:
-    print(f"Error loading VMEC data: {e}")
+    print(f"Error loading MGRID data: {e}")
     sys.exit(1)
 
 # creating a boundary torus as a stopping condition for the magnetic field lines (placeholder until we 
 # can find the real HSX mesh)
-vessel = boundary.Torosurf()
+vessel = model.Torosurf()
 
 # generating 50 evenly spaced starting points along the major radius between 1.2 meters and 1.5 meters 
 # to analyze how connection length changes as we move outward from the core of the plasma to the edge 
@@ -49,7 +50,6 @@ start_points = np.column_stack((R_start, Z_start, Phi_start))
 
 # providing the flare simulation code with the magnetic field, boundary and starting points set up above
 task = fieldline_connection.Task(
-    bfield=B_field,
     boundary=vessel,
     points=start_points,
 

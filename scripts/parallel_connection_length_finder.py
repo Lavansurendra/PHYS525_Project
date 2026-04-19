@@ -17,6 +17,7 @@ import moose
 import flare
 from flare import model
 from flare.tasks import fieldline_connection
+from moose.grids import R3grid
 
 
 # Specifying the path to the VMEC output file for HSX.
@@ -37,41 +38,54 @@ except Exception as e:
 
 # creating a boundary torus as a stopping condition for the magnetic field lines (placeholder until we 
 # can find the real HSX mesh)
-vessel = model.Torosurf()
+# vessel = model.Torosurf()
 
-# generating 50 evenly spaced starting points along the major radius between 1.2 meters and 1.5 meters 
-# to analyze how connection length changes as we move outward from the core of the plasma to the edge 
-R_start = np.linspace(1.2, 1.5, 50)
-# fixing 50 starting points at z=0 and phi=0 so that all starting points are found on the outboard midplane of the plasma  
-Z_start = np.zeros(50)               
-Phi_start = np.zeros(50)             
-# organizing the starting points to be provided to the flare code
-start_points = np.column_stack((R_start, Z_start, Phi_start))
+# # generating 50 evenly spaced starting points along the major radius between 1.2 meters and 1.5 meters 
+# # to analyze how connection length changes as we move outward from the core of the plasma to the edge 
+# R_start = np.linspace(1.2, 1.5, 50)
+# # fixing 50 starting points at z=0 and phi=0 so that all starting points are found on the outboard midplane of the plasma  
+# Z_start = np.zeros(50)               
+# Phi_start = np.zeros(50)             
+# # organizing the starting points to be provided to the flare code
+# start_points = np.column_stack((R_start, Z_start, Phi_start))
+
+R_array = np.linspace(1.2, 1.5, 50)
+Z_array = np.array([0.0])  # A single Z point (outboard midplane)
+phi_val = 0.0              # A single Phi angle
+
+# Generate the grid object and save it exactly how Fortran expects
+my_grid = R3grid.rzmesh(R_array, Z_array, phi_val)
+my_grid.savetxt("grid.dat")
+print("Saved starting coordinates to 'grid.dat' using MOOSE R3grid.")
 
 # providing the flare simulation code with the magnetic field, boundary and starting points set up above
-task = fieldline_connection.Task(
-    boundary=vessel,
-    points=start_points,
 
-    # since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
-    # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
-    max_length=10000.0  
-)
+# using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
+# NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
+      # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
+fieldline_connection(grid='grid.dat', lcmax=10000.0, output='lc.dat')
 
-# runs the C++ code within the flare module to simulate the field lines from each of the starting points
-results = task.execute()
+# once the C++ engine stops running lc.dat contains trace data which we can plot against our starting coordinates
+if os.path.exists('lc.dat'):
+    print("Trace complete. Loading results from 'lc.dat'.")
+    data = np.loadtxt('lc.dat')
 
-# once the C++ engine stops running results.connection_length contains an array of 50 numbers which we can plot against our starting coordinates
-L_c = results.connection_length
+    # extracting the connection lengths from the data file
+    if data.ndim > 1:
+        L_c = data[:,-1]
+    else:
+        L_c = data
 
 # plotting the distances of each of the field lines starting from our specified starting R coordinates to see where each one collides with the boundary
-plt.plot(R_start, L_c, marker='o', linestyle='-')
+    plt.figure(figsize=(8, 5))
+    plt.plot(R_start, L_c, marker='o', linestyle='-')
+    plt.title("HSX Parallel Connection Length (No Wall)")
+    plt.xlabel("Starting Radius R (m)")
+    plt.ylabel("Distance until Grid Exit (m)")
+    plt.yscale('log') 
+    plt.grid(True)
 
-plt.figure(figsize=(8, 5))
-plt.plot(R_start, L_c, marker='o', linestyle='-')
-plt.title("HSX Parallel Connection Length (QHS)")
-plt.xlabel("Starting Radius R (m)")
-plt.ylabel("Connection Length L_c (m)")
-plt.yscale('log') # Usually plotted in log scale since confined lines hit max_length
-plt.grid(True)
-plt.savefig("HSX_Connection_Length.png")
+    plt.savefig("HSX_Connection_Length.png")
+
+else:
+    print("Error: The C++ engine failed to generate the 'lc.dat' output file.")

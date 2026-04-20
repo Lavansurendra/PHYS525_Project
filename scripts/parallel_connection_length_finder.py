@@ -49,7 +49,7 @@ except Exception as e:
 # # organizing the starting points to be provided to the flare code
 # start_points = np.column_stack((R_start, Z_start, Phi_start))
 
-R_array = np.linspace(1.2, 1.5, 50)
+R_array = np.linspace(1.35, 1.54, 50)
 Z_array = np.array([0.0])  # A single Z point (outboard midplane)
 phi_val = 0.0              # A single Phi angle
 
@@ -60,28 +60,33 @@ print("Saved starting coordinates to 'grid.dat' using MOOSE R3grid.")
 
 # providing the flare simulation code with the magnetic field, boundary and starting points set up above
 
-# using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
-# NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
-      # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
-fieldline_connection(grid='grid.dat', lcmax=10000.0, output='lc.dat')
+# # using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
+# # NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
+#       # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
+# fieldline_connection(grid='grid.dat', lcmax=10000.0, output='lc.dat')
 
 # once the C++ engine stops running lc.dat contains trace data which we can plot against our starting coordinates
 if os.path.exists('lc.dat'):
     print("Trace complete. Loading results from 'lc.dat'.")
+    # NOTE: np.loadtxt loads the data file but skips all the commented lines explaining what the columns contain
     data = np.loadtxt('lc.dat')
 
     # extracting the connection lengths from the data file
     if data.ndim > 1:
-        L_c = data[:,-1]
+        # from printing the dataset we found that the backward and forward connection lengths are found in the first and second column of the lc.dat file so we will add them together to get the total connection length for each starting point
+        L_c = data[:,0] + data[:,1]
+        print(L_c)
     else:
-        L_c = data
+        # Failsafe just in case it only reads one row
+        L_c = data[0] + data[1]
+        print(L_c)
 
 # plotting the distances of each of the field lines starting from our specified starting R coordinates to see where each one collides with the boundary
     plt.figure(figsize=(8, 5))
-    plt.plot(R_start, L_c, marker='o', linestyle='-')
-    plt.title("HSX Parallel Connection Length (No Wall)")
+    plt.plot(R_array, L_c, marker='o', linestyle='-')
+    plt.title("HSX Parallel Connection Length (First Wall)")
     plt.xlabel("Starting Radius R (m)")
-    plt.ylabel("Distance until Grid Exit (m)")
+    plt.ylabel("Connection Length L_c (m)")
     plt.yscale('log') 
     plt.grid(True)
 

@@ -1,28 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import sys;
 
 # ─────────────────────────────────────────
 # PARAMETERS — edit these freely
 # ─────────────────────────────────────────
 
-L = 100.0          # parallel connection length
+L = 3.33          # parallel connection length (modify)
 N = 10000            # number of spatial grid points
-kTe = 5              # electron temperature in eV
+Te = 3              # electron temperature in eV (modify)
 me = 9.11 * 10**(-31)    # electron mass in kg
+e = 1.602 * 10**(-19)   # elementary charge
 epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
-vth = np.sqrt((2 * kTe) / me)
 max_length = 10             # the length of the field line over which density values will be calculated
-dt = 0.001          # time step in seconds
-n_steps = 50000     # total number of time steps to simulate
+dt = 0.000000000001          # time step in seconds (modify)
+n_steps = 50000     # total number of time steps to simulate (modify)
 animate_every = 5  # only render every Nth frame (keeps animation smooth)
 
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
 
 # Gaussian initial condition parameters
 bump_center = max_length / 2   # center of the Gaussian bump
-bump_width  = 0.05     # standard deviation (controls how wide the spike is)
-bump_height = n_baseline / 3     # peak amplitude
+bump_width  = 0.05     # standard deviation (controls how wide the spike is) (modify)
+bump_height = n_baseline / 3     # peak amplitude (modify)
 
 # ─────────────────────────────────────────
 # GRID SETUP
@@ -40,9 +41,12 @@ n_fluc = bump_height * np.exp(-0.5 * ((s - bump_center) / bump_width)**2)
 n = n_baseline + n_fluc
 n_initial = n.copy()
 
-L_debye = 7430 * np.sqrt((kTe) / n_initial[1:-1])
+# np.set_printoptions(threshold=sys.maxsize); print(n_fluc)
+
+L_debye = 7430 * np.sqrt((Te) / n_initial[1:-1])
 Lambda = 12 * np.pi * n_initial[1:-1] * L_debye**3
-nu_ei = (n_initial[1:-1] * (np.e**4) * np.log(Lambda)) / (3 * epsilon**2 * me**(1/2) * (2*kTe)**(3/2))
+vth = np.sqrt((Te * e) / me)
+nu_ei = (n_initial[1:-1] * (e**4) * np.log(Lambda)) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*Te*e)**(3/2))
 D_parallel = vth**2 / nu_ei   # parallel diffusion coefficient (m^2/s or arbitrary units)
 
 # Stability check: diffusion number must be <= 0.5 for explicit scheme
@@ -66,9 +70,9 @@ def step(n_baseline, n_fluc):
     
     n = n_baseline + n_fluc
 
-    L_debye = 7430 * np.sqrt((kTe) / n[1:-1])
+    L_debye = 7430 * np.sqrt((Te) / n[1:-1])
     Lambda = 12 * np.pi * n[1:-1] * L_debye**3
-    nu_ei = (n[1:-1] * (np.e**4) * np.log(Lambda)) / (3 * epsilon**2 * me**(1/2) * (2*kTe)**(3/2))
+    nu_ei = (n_initial[1:-1] * (e**4) * np.log(Lambda)) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*Te*e)**(3/2))
     D_parallel = vth**2 / nu_ei   # parallel diffusion coefficient (m^2/s or arbitrary units)
     tau = L**2 / D_parallel
 
@@ -76,7 +80,7 @@ def step(n_baseline, n_fluc):
     
     n_fluc_new = n_fluc.copy()
     # Interior points
-    n_fluc_new[1:-1] = n_fluc[1:-1] + r * (n_fluc[2:] - 2*n_fluc[1:-1] + n_fluc[:-2]) #- n_fluc[1:-1] / tau
+    n_fluc_new[1:-1] = n_fluc[1:-1] + r * (n_fluc[2:] - 2*n_fluc[1:-1] + n_fluc[:-2]) - n_fluc[1:-1] / tau
     # Neumann boundary conditions (zero flux at both ends)
     n_fluc_new[0] = n_fluc_new[1]
     n_fluc_new[-1] = n_fluc_new[-2]

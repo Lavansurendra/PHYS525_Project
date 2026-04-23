@@ -40,18 +40,16 @@ except Exception as e:
 # can find the real HSX mesh)
 # vessel = model.Torosurf()
 
-# # generating 50 evenly spaced starting points along the major radius between 1.2 meters and 1.5 meters 
+# # generating 50 evenly spaced starting points along the major radius between 1.35 meters and 1.54 meters 
 # # to analyze how connection length changes as we move outward from the core of the plasma to the edge 
-# R_start = np.linspace(1.2, 1.5, 50)
+R_array = np.linspace(1.35, 1.54, 50)
 # # fixing 50 starting points at z=0 and phi=0 so that all starting points are found on the outboard midplane of the plasma  
-# Z_start = np.zeros(50)               
-# Phi_start = np.zeros(50)             
-# # organizing the starting points to be provided to the flare code
+Z_array = np.array([0.0])
+phi_val = 0.0              # A single Phi angle# # organizing the starting points to be provided to the flare code
 # start_points = np.column_stack((R_start, Z_start, Phi_start))
 
-R_array = np.linspace(1.35, 1.54, 50)
-Z_array = np.array([0.0])  # A single Z point (outboard midplane)
-phi_val = 0.0              # A single Phi angle
+
+
 
 # Generate the grid object and save it exactly how Fortran expects
 my_grid = R3grid.rzmesh(R_array, Z_array, phi_val)
@@ -60,10 +58,10 @@ print("Saved starting coordinates to 'grid.dat' using MOOSE R3grid.")
 
 # providing the flare simulation code with the magnetic field, boundary and starting points set up above
 
-# # using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
-# # NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
-#       # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
-# fieldline_connection(grid='grid.dat', lcmax=10000.0, output='lc.dat')
+# using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
+# NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced
+      # if a field line travels 10 kilometers without hitting the boundary then we will assume it is confined and stop tracing
+fieldline_connection(grid='grid.dat', lcmax=10000.0, output='lc.dat')
 
 # once the C++ engine stops running lc.dat contains trace data which we can plot against our starting coordinates
 if os.path.exists('lc.dat'):

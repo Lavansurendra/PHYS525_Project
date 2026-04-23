@@ -1,6 +1,6 @@
 # PHYS525 Project: Stellarator Parallel Connection Length & 1D Radial Diffusion
 
-This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX) using the MGRID format. These $L_c$ values act as the parallel loss sink term for the 1D radial anomalous diffusion solver developed by Robert and the project team.
+This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX) using the MGRID format. These $L_c$ values are used to set the length of the magnetic field line over which a diffusion equation describing the propagation of a disturbance in the density of the plasma is solved.
 
 Because this project relies on the **FLARE** physics engine and the **MOOSE** framework (which must be compiled from source), you cannot simply `pip install` the requirements. 
 
@@ -129,4 +129,5 @@ Because the FLARE C++ wrapper operates via file I/O, this script uses `moose.gri
 python parallel_connection_length_finder.py
 ```
 
-**2. Run the 1D Radial Diffusion Solver:**
+## 8. Run the 1D Diffusion Equation Solver
+Set the parallel connection length, the desired electron temperature of the plasma in eV, the total amount of time you want the diffusion equation to be solved for, the number of spatial grid points you want the diffusion equation solved for along the magnetic field line with length equal to the parallel connection length, the number of time steps you want the diffusion equation solved for, and the baseline plasma density. Note that if your settings cause the diffusion equation solving method (Forward Time Center Space) to become numerically unstable, an error will be thrown suggesting a new number of timesteps to calculate over to make the solver stable. You can also modify the shape (amplitude, initial position, width) of the density disturbance. The solver will save the calculated density values for each time and spatial position along the field line to a CSV and then animate the propagation of the disturbance.

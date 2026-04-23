@@ -1,6 +1,6 @@
-# PHYS525 Project: Stellarator 1D Diffusion Analysis & Parallel Connection Length
+# PHYS525 Project: Stellarator Parallel Connection Length & 1D Radial Diffusion
 
-This repository contains the Python scripts and data required to extract 1D magnetic geometry from VMEC equilibria for a Crank-Nicolson diffusion solver, as well as simulating 3D magnetic field line parallel connection lengths ($L_c$) using the MGRID format.
+This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX) using the MGRID format. These $L_c$ values act as the parallel loss sink term for the 1D radial anomalous diffusion solver developed by Robert and the project team.
 
 Because this project relies on the **FLARE** physics engine and the **MOOSE** framework (which must be compiled from source), you cannot simply `pip install` the requirements. 
 
@@ -89,7 +89,7 @@ mkdir -p ~/DATABASE/flare/HSX/mgrid
 ```
 
 **Step 2: Add the MGRID File**
-Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln.nc`) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. *(Note: Do not use the VMEC `wout_*.nc` files for the connection length trace; they lack vacuum field data).*
+Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln.nc`) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
 **Step 3: Create the `.bfield` Configuration**
 Inside the `mgrid` folder, create a hidden file named `.bfield`:
@@ -106,26 +106,27 @@ amplitudes: [-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722
 dtype: 'magnetic_field'
 ```
 
-**Step 4: Create the `.boundary` Bypass**
-FLARE's internal parser will refuse to load the model unless a boundary configuration file exists in the same directory. Until the physical CAD mesh of the HSX vessel is acquired, create an **empty** boundary file to bypass the security check without triggering a build error:
+**Step 4: Add the 3D Vessel Mesh**
+Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt`) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```bash
-touch ~/DATABASE/flare/HSX/mgrid/.boundary
+nano ~/DATABASE/flare/HSX/mgrid/.boundary
+```
+Paste the following text exactly as written:
+```ini
+[DEFAULT]
+
+[firstwall]
+dtype: torosurf
+filename: vessel_hsx_flare.txt
 ```
 
 ## 7. Running the Code
 You do not need to install MOOSE or FLARE into your Python environment. Our Python scripts handle this dynamically. As long as the folders are named `moose` and `flare` and sit in the root of this project directory, scripts will automatically append the build paths using `sys.path.insert()`.
 
-**To test the 1D VMEC extraction:**
-```bash
-python extract_hsx.py
-```
-
-**To test the 3D MGRID Parallel Connection Length trace:**
-Because the FLARE C++ wrapper operates via file I/O, this script uses `moose.grids` to generate a `grid.dat` input file for the Fortran engine, executes the trace, and reads the output from `lc.dat`.
+**1. Calculate Parallel Connection Lengths:**
+Because the FLARE C++ wrapper operates via file I/O, this script uses `moose.grids` to generate a `grid.dat` input file for the Fortran engine, executes the field-line trace against the 3D vessel mesh, and outputs data to `lc.dat`.
 ```bash
 python parallel_connection_length_finder.py
 ```
 
-## 8. Known Limitations & Next Steps
-* **Missing Vessel Mesh:** The current parallel connection length simulation is operating "wall-free." Because there is no physical boundary to stop the trace, particles eventually crash into the physical electromagnets, causing the toroidal field to drop to zero and throwing a Runge-Kutta integrator failure (`Error 7`). 
-* **Next Step:** Acquire the 3D first-wall mesh of the HSX vacuum vessel, update the `.boundary` config file to include it, and re-run to get physically accurate $L_c$ measurements.
+**2. Run the 1D Radial Diffusion Solver:**

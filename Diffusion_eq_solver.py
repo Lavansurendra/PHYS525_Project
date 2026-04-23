@@ -7,22 +7,20 @@ import matplotlib.animation as animation
 # PARAMETERS — edit these freely
 # ─────────────────────────────────────────
 
-L = 3.33          # parallel connection length (chosen values: [])
-Te = 20              # electron temperature in eV (chosen values: [1,2,3,4,5])
+L = 1.02          # parallel connection length (chosen values: [1.02, 1.14, 1.33, 1.51, 3.33])
+Te = 5              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
 me = 9.11 * 10**(-31)    # electron mass in kg
 e = 1.602 * 10**(-19)   # elementary charge
 epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
-# max_length = 10             # the length of the field line over which density values will be calculated
 N = 1000            # number of spatial grid points
 total_sim_time = 5 * 10**(-8)   # total time simulator runs (modify)
-n_steps = 350000   # total number of time steps to simulate (modify)
-animate_every = 5  # only render every Nth frame (keeps animation smooth)
+n_steps = 150000   # total number of time steps to simulate (chosen values: {3.33: [], })
+animate_every = 1000  # only render every Nth frame (keeps animation smooth)
 
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
 alpha = 1                    # factor multiplied onto parallel diffusion parameter to account for 
 
 # Gaussian initial condition parameters
-# bump_center = max_length / 2   # center of the Gaussian bump
 bump_center = L / 2   # center of the Gaussian bump
 bump_width = 0.05     # standard deviation (controls how wide the spike is) (modify)
 bump_height = n_baseline / 3     # peak amplitude (modify)
@@ -33,7 +31,6 @@ d_min_thres = (1/np.e) * bump_height + n_baseline   # disturbance height at cent
 # GRID SETUP
 # ─────────────────────────────────────────
 
-# s = np.linspace(0, max_length, N)       # spatial grid along field line
 s = np.linspace(0, L, N)       # spatial grid along field line
 ds = s[1] - s[0]               # grid spacing
 dt = total_sim_time / n_steps         # time step in seconds (modify)
@@ -82,20 +79,15 @@ def step(n_baseline, n_fluc):
     Lambda = 12 * np.pi * n[1:-1] * L_debye**3  # Coulomb Factor (for Coulomb logarithm)
     nu_ei = (n_initial[1:-1] * (e**4) * np.log(Lambda)) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*Te*e)**(3/2))     # collision frequency between electrons and ions
     D_parallel = alpha * vth**2 / nu_ei   # parallel diffusion coefficient (m^2/s or arbitrary units)
-    # tau = L**2 / D_parallel
-
     r = (D_parallel * dt) / ds**2
     
     n_fluc_new = n_fluc.copy()
+    
     # Interior points
-    n_fluc_new[1:-1] = n_fluc[1:-1] + r * (n_fluc[2:] - 2*n_fluc[1:-1] + n_fluc[:-2]) #- n_fluc[1:-1] / tau
+    n_fluc_new[1:-1] = n_fluc[1:-1] + r * (n_fluc[2:] - 2*n_fluc[1:-1] + n_fluc[:-2])
     # Boundary conditions (flux equal at both ends)
-    # n_fluc_new[0] = n_fluc_new[1]
-    # n_fluc_new[-1] = n_fluc_new[-2]
-    # n_fluc_new[0] = (4/3) * n_fluc_new[1] - (1/3) * n_fluc_new[2]
-    # n_fluc_new[-1] = (4/3) * n_fluc_new[-2] - (1/3) * n_fluc_new[-3]
     n_fluc_new[0] = n_fluc_new[1]
-    n_fluc_new[-1] = (-3) * n_fluc_new[0] + 4 * n_fluc_new[1] - n_fluc_new[2] - n_fluc_new[-3] + 4 * n_fluc_new[-2]
+    n_fluc_new[-1] = ((3) * n_fluc_new[0] - 4 * n_fluc_new[1] + n_fluc_new[2] - n_fluc_new[-3] + 4 * n_fluc_new[-2]) / 3
     return n_fluc_new
 
 # ─────────────────────────────────────────
@@ -121,13 +113,12 @@ for i in range(n_steps):
     n_fluc_current = step(n_baseline, n_fluc_current)
     n_current = n_baseline + n_fluc_current
 
-    # if the current disturbance height
+    # if the current disturbance height is below the threshold, record the time at which it crossed the threshold
     if np.max(n_current) <= d_min_thres and decay_time == False:
         
         decay_time = i * dt
 
 
-print(f"Computed {len(frames)} frames over t = 0 to {n_steps * dt:.4f} s")
 print(f"Decay time was: {decay_time} seconds")
 
 # ─────────────────────────────────────────
@@ -153,11 +144,10 @@ ax.set_ylabel('Perturbation density  n(s, t)', color='white', fontsize=12)
 ax.tick_params(colors='white')
 for spine in ax.spines.values():
     spine.set_edgecolor('#444466')
-# ax.set_xlim(0, max_length)
 ax.set_xlim(0, L)
 ax.set_ylim(0.95*n_baseline, 1.5*n_baseline)
 
-time_text = ax.text(0.02, 0.93, '', transform=ax.transAxes, color='#ffdd88', fontsize=11, fontfamily='monospace')
+# time_text = ax.text(0.02, 0.93, '', transform=ax.transAxes, color='#ffdd88', fontsize=11, fontfamily='monospace')
 
 legend = ax.legend(loc='upper right', framealpha=0.2, labelcolor='white')
 ax.set_title('1D Parallel Diffusion Along a Field Line', color='white', fontsize=13, pad=12)
@@ -173,8 +163,9 @@ def update(frame_idx):
         coll.remove()
     ax.fill_between(s, y, alpha=0.15, color='#00cfff')
 
-    time_text.set_text(f't = {times[frame_idx]:.2f} s    (D∥ = {D_parallel})')
-    return line, time_text
+    # time_text.set_text(f't = {times[frame_idx]:.2f} s    (D∥ = {D_parallel})')
+    # return line, time_text
+    return line
 
 ani = animation.FuncAnimation(
     fig, update,

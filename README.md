@@ -18,7 +18,7 @@ sudo apt install build-essential cmake gfortran pkgconf \
 ```
 
 ## 2. Conda Environment Setup
-We use Conda for the base Python environment, but we must install `mpi4py` via `pip` to ensure it compiles against the system's OpenMPI and `gfortran` libraries. **Do not use Conda to install MPI.**
+We use Conda for the base Python environment, but you must install `mpi4py` via `pip` to ensure it compiles against the system's OpenMPI and `gfortran` libraries. **Do not use Conda to install MPI.**
 
 ```bash
 # Create and activate the environment
@@ -34,8 +34,6 @@ pip install mpi4py
 
 ## 3. Clone the Sub-Repositories
 Make sure you are in the main project folder. You need to pull down the source code for Dr. Frerichs' MOOSE and FLARE libraries. 
-
-*(Note: These folders should be in the `.gitignore` so we don't accidentally push compiled binaries to the repo).*
 
 ```bash
 git clone [https://gitlab.com/hfrerichs/moose.git](https://gitlab.com/hfrerichs/moose.git)
@@ -62,7 +60,7 @@ cd ../..
 ```
 
 ## 5. Compile the FLARE Physics Engine
-Now we build FLARE, explicitly pointing it to the local MOOSE installation we just created.
+Now you must build FLARE and explicitly point it to the local MOOSE installation you just created.
 
 ```bash
 cd flare
@@ -85,11 +83,11 @@ FLARE does not read raw magnetic grid files via absolute paths in Python. It rel
 **Step 1: Create the directory**
 Run this command from anywhere in your WSL/Linux terminal:
 ```bash
-mkdir -p ~/DATABASE/flare/HSX/mgrid
+'mkdir -p ~/DATABASE/flare/HSX/mgrid
 ```
 
 **Step 2: Add the MGRID File**
-Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln.nc`) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
+Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln.nc` or another magnetic grid file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
 **Step 3: Create the `.bfield` Configuration**
 Inside the `mgrid` folder, create a hidden file named `.bfield`:
@@ -105,9 +103,10 @@ filename: mgrid_res2p5cm_180pln.nc
 amplitudes: [-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,0.00,0.00,0.00,0.00,0.00,0.0000E+00]
 dtype: 'magnetic_field'
 ```
+*NOTE: the files and configuration specifications used throughout this code were provided by Dr. Dieter Boeyaert*
 
 **Step 4: Add the 3D Vessel Mesh**
-Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt`) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
+Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```bash
 nano ~/DATABASE/flare/HSX/mgrid/.boundary
 ```

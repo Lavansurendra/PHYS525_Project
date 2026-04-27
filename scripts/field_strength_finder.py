@@ -58,6 +58,10 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
 
     print(f"Calculating |B| at phi = {phi_angle} rad...")
 
+    total_points = len(r_grid)
+    # How wide the progress bar will be in the terminal
+    bar_length = 40  
+
     for i, r in enumerate(r_grid):
         
         # translating 1D minor radius into a 3D coordinate on the midplane
@@ -67,10 +71,23 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
         # using flare code to get the 3D vector [Br, Bz, Bphi] of the magnetic field at the specified point
         B_vector = bfield.eval(R, Z, phi_angle)
         
-        # calculating the scalar magnitude |B| and save it
+        # calculating the scalar magnitude |B| and saving it
         B_strength[i] = np.linalg.norm(B_vector)
 
-    print("Data extraction complete!")
+        # Calculate the percentage completed
+        percent = (i + 1) / total_points
+        
+        # Calculate how many solid blocks to draw
+        filled_length = int(bar_length * percent)
+        
+        # Create the visual bar
+        bar = '█' * filled_length + '-' * (bar_length - filled_length)
+        
+        # Write to the terminal. The '\r' forces it to overwrite the same line
+        sys.stdout.write(f"\rProgress: |{bar}| {percent * 100:.1f}% Complete")
+        sys.stdout.flush()
+
+    print("\nData extraction complete!")
 
 
     #  creating a data folder if it doesn't already exist
@@ -121,6 +138,8 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
 
     plt.tight_layout()
     plt.show()
+
+    return B_strength
 
 if __name__ == "__main__":
 

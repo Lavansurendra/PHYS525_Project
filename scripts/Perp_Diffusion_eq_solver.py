@@ -11,7 +11,7 @@ from field_strength_finder import Field_Strength_Finder
 # ─────────────────────────────────────────
 
 # simulation parameters
-N = 1000            # number of spatial grid points
+N = 1001            # number of spatial grid points (NOTE: this must be an odd number for the finite difference method in cylindrical coordinates to work properly)
 total_sim_time = 5 * 10**(-8)   # total time simulator runs (modify)
 n_steps = 10000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
 animate_every = 1000  # only render every Nth frame (keeps animation smooth)
@@ -29,7 +29,7 @@ n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
 B = Field_Strength_Finder(N, obs_phi)
 
 # Gaussian initial condition parameters
-bump_center = minor_r   # center of the Gaussian bump
+bump_center = 0   # center of the Gaussian bump
 bump_width = 0.05     # standard deviation (controls how wide the spike is) (modify)
 bump_height = Te / 10     # peak amplitude (modify)
 
@@ -51,7 +51,8 @@ if recalculate_data:
     # GRID SETUP
     # ─────────────────────────────────────────
 
-    s = np.linspace(0, 2*minor_r, N)       # spatial grid along field line
+    s = np.linspace(-minor_r, minor_r, N)       # spatial grid along field line
+    center = len(s) // 2
     ds = s[1] - s[0]               # grid spacing
     dt = total_sim_time / n_steps         # time step in seconds (modify)
 
@@ -92,7 +93,8 @@ if recalculate_data:
     # Using forward-time, centered-space (FTCS) finite differences with insulated boundary conditions
 
     def step(T_fluc):
-        """Advance n by one time step using FTCS scheme with zero-flux boundaries."""
+        
+        """Advance n by one time step using cylindrical coordinate FTCS scheme with zero-flux boundaries."""
         
         T = Te + T_fluc
 
@@ -102,16 +104,17 @@ if recalculate_data:
         vth = np.sqrt((T[1:-1] * e) / me)
         r_larmor = (me**2 * vth**2) / (e**2 * B[1:-1])
         chi_perp = r_larmor**2 * nu_ei
-        r = (chi_perp * dt) / ds**2
+        r = chi_perp * dt
         
         T_fluc_new = T_fluc.copy()
         
         # Interior points
-        T_fluc_new[1:-1] = T_fluc[1:-1] + r * (T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2])
+        T_fluc_new[1:-1] = T_fluc[1:-1] + r * ((T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2 + (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds))
+        
         # Insulated Boundary conditions (we assume no heat transfer out of the plasma to the walls)
-        T_fluc_new[0] = (4/3) * T_fluc_new[1] - (1/3) * T_fluc_new[2]
-        T_fluc_new[-1] = (4/3) * T_fluc_new[-2] - (1/3) * T_fluc_new[-3]
-        return T_fluc_new
+        T_fluc_new[0] = T_fluc_new[1]
+        T_fluc_new[-1] = T_fluc_new[-2]
+        T_fluc_new[center] = T_fluc[center] + 2 * r * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds **2
 
     # ─────────────────────────────────────────
     # PRE-COMPUTE FRAMES FOR ANIMATION

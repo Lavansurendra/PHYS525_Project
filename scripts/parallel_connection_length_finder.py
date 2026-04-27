@@ -1,10 +1,10 @@
 # Importing neccesary libraries for running Fortran/C++ files set up by make command in moose and flare directories
-import sys
-import os
+import sys # Lets us modify how Python searches for files
+import os # Lets us interact with the computer's file system (folders/paths)
 
 # importing numpy and matplotlib for calculations and visualization of parralel connection length
-import numpy as np
-import matplotlib.pyplot as plt
+import numpy as np # The standard library for heavy array math
+import matplotlib.pyplot as plt # The standard library for plotting graphs
 
 # specifying the location of the .so files for flare and moose code 
     # NOTE: the insert command allows us to specify what order the directories should be searched in when we run the flare import
@@ -12,17 +12,13 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.expanduser('~/PHYS525/PHYS525_Project/moose/python'))
 sys.path.insert(0, os.path.expanduser('~/PHYS525/PHYS525_Project/flare/python'))
 
+# creating a temporary system variable called 'DATABASE' pointing to your ~/DATABASE folder.
+os.environ["DATABASE"] = os.path.expanduser("~/DATABASE")
+
 # importing functions from the flare and moose directories that we will need to use to run the C++ code of moose and flare
-import moose
-import flare
 from flare import model
 from flare.tasks import fieldline_connection
 from moose.grids import R3grid
-
-
-# Specifying the path to the VMEC output file for HSX.
-# NOTE: When other computers run this code they will have to change this path
-vmec_file_path = "/home/lavan/PHYS525/PHYS525_Project/wout_HSX_ar6.nc"
 
 # using the HSX mgrid model given by Dr. Dieter Boeyaert and generating a continuous 3d mathematical model of the 
 # magnetic field
@@ -78,7 +74,10 @@ if os.path.exists('lc.dat'):
     plt.yscale('log') 
     plt.grid(True)
 
-    plt.savefig("HSX_Connection_Length.png")
+    #  creating a data folder if it doesn't already exist
+    output_folder = os.path.join("..", "data", "diffusion_solver")
+    plot_filename = os.path.join(output_folder, f"HSX_Connection_Length_1.png")
+    plt.savefig(plot_filename, dpi=300)
 
 else:
     print("Error: The C++ engine failed to generate the 'lc.dat' output file.")

@@ -3,19 +3,19 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import csv
-
+import os
 # ─────────────────────────────────────────
 # PARAMETERS — edit these freely
 # ─────────────────────────────────────────
 
 L = 1.51          # parallel connection length (chosen values: [1.02, 1.14, 1.33, 1.51, 3.33])
-Te = 5              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
+Te = 7              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
 me = 9.11 * 10**(-31)    # electron mass in kg
 e = 1.602 * 10**(-19)   # elementary charge
 epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
-N = 190000000            # number of spatial grid points
+N = 1000            # number of spatial grid points
 total_sim_time = 5 * 10**(-8)   # total time simulator runs (modify)
-n_steps = 1   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
+n_steps = 129000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
 animate_every = 1000  # only render every Nth frame (keeps animation smooth)
 
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
@@ -32,10 +32,10 @@ d_min_thres = (1/np.e) * bump_height + n_baseline   # disturbance height at cent
 recalculate_data = True
 
 # this variable should be set to the name of the csv you want to create or save to if the recalculate_data boolean is set to True, or the name of the csv you want to read from if the recalculate_data boolean is set to False
-csv_filename = "dif_151_5.csv"
+csv_filename = "dif_151_7_test.csv"
 
 # this variable should be set to the name of the gif you want to create corresponding to the animation
-gif_filename = "dif_151_5_animation.gif"
+gif_filename = "dif_151_7_animation_test.gif"
 
 # only recalculate data if the boolean is set to True, otherwise just read the data from the csv file and skip the simulation
 
@@ -138,10 +138,17 @@ if recalculate_data:
     # EXPORT DATA TO CSV
     # ─────────────────────────────────────────
 
-    print(f"Writing data to {csv_filename}...")
+    # defining the output folder we will save our data to, and creating the folder if it doesn't already exist
+    output_folder = os.path.join("..", "data", "diffusion_solver")
+    os.makedirs(output_folder, exist_ok=True)
+
+    # defining the full path to the csv file we will save our data to
+    path_name = os.path.join(output_folder, csv_filename)
+
+    print(f"Writing data to {path_name}...")
 
     # Open the file in write mode
-    with open(csv_filename, mode='w', newline='') as file:
+    with open(path_name, mode='w', newline='') as file:
         writer = csv.writer(file)
         
         # 1. Create and write the header row
@@ -162,7 +169,7 @@ if recalculate_data:
             # Write the completed row to the CSV
             writer.writerow(row)
 
-    print(f"Data successfully saved to {csv_filename}")
+    print(f"Data successfully saved to {path_name}")
 
     # ─────────────────────────────────────────
     # ANIMATION
@@ -215,10 +222,13 @@ if recalculate_data:
         blit=False
     )
     
+    # defining the full path to the animation file we will save our data to
+    path_name = os.path.join(output_folder, gif_filename)
+
     # Save the animation as a GIF file using Pillow writer
-    print(f"Saving animation to {gif_filename}... (this may take a minute or two)")
-    ani.save(gif_filename, writer='pillow', fps=30)
-    print(f"GIF successfully saved to {gif_filename}!")
+    print(f"Saving animation to {path_name}... (this may take a minute or two)")
+    ani.save(path_name, writer='pillow', fps=30)
+    print(f"GIF successfully saved to {path_name}!")
     plt.tight_layout()
     plt.show()
 
@@ -228,6 +238,13 @@ else:
     s_vals = []
     frames = []
     times = []
+
+    # defining the output folder we will save our data to, and creating the folder if it doesn't already exist
+    output_folder = os.path.join("..", "data", "diffusion_solver")
+    os.makedirs(output_folder, exist_ok=True)
+
+    # defining the full path to the csv file we will save our data to
+    path_name = os.path.join(output_folder, csv_filename)
 
     try:
         with open(csv_filename, 'r') as file:
@@ -250,7 +267,7 @@ else:
                     frames[i].append(float(val))
                     
     except FileNotFoundError:
-        print(f"Error: Could not find '{csv_filename}'. Make sure it's in the same folder!")
+        print(f"Error: Could not find '{path_name}'. Make sure it's in the same folder!")
         exit()
 
     # Convert standard Python lists to Numpy arrays for Matplotlib
@@ -321,9 +338,12 @@ else:
         blit=False
     )
 
+    # defining the full path to the animation file we will save our data to
+    path_name = os.path.join(output_folder, gif_filename)
+
     # Save the animation as a GIF file using Pillow writer
-    print(f"Saving animation to {gif_filename}... (this may take a minute or two)")
-    ani.save(gif_filename, writer='pillow', fps=30)
+    print(f"Saving animation to {path_name}... (this may take a minute or two)")
+    ani.save(path_name, writer='pillow', fps=30)
     print(f"GIF successfully saved to {gif_filename}!")
 
     plt.tight_layout()

@@ -58,10 +58,6 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
 
     print(f"Calculating |B| at phi = {phi_angle} rad...")
 
-    total_points = len(r_grid)
-    # How wide the progress bar will be in the terminal
-    bar_length = 40  
-
     for i, r in enumerate(r_grid):
         
         # translating 1D minor radius into a 3D coordinate on the midplane
@@ -74,20 +70,7 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
         # calculating the scalar magnitude |B| and saving it
         B_strength[i] = np.linalg.norm(B_vector)
 
-        # Calculate the percentage completed
-        percent = (i + 1) / total_points
-        
-        # Calculate how many solid blocks to draw
-        filled_length = int(bar_length * percent)
-        
-        # Create the visual bar
-        bar = '█' * filled_length + '-' * (bar_length - filled_length)
-        
-        # Write to the terminal. The '\r' forces it to overwrite the same line
-        sys.stdout.write(f"\rProgress: |{bar}| {percent * 100:.1f}% Complete")
-        sys.stdout.flush()
-
-    print("\nData extraction complete!")
+    print("Data extraction complete!")
 
 
     #  creating a data folder if it doesn't already exist
@@ -144,4 +127,12 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
 if __name__ == "__main__":
 
     # Example usage: calculate and plot |B| vs minor radius at phi = 0.0 radians with 100 points
-    Field_Strength_Finder(num_minor_radius_points=100, phi_angle=0.0)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=0)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=0.7854)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=1.5708)
+    Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=2.3562)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=3.1416)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=3.9270)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=4.7124)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=5.4978)
+    # Field_Strength_Finder(num_minor_radius_points=1001, phi_angle=6.2832)

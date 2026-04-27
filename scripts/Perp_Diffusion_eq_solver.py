@@ -13,8 +13,8 @@ from field_strength_finder import Field_Strength_Finder
 
 # simulation parameters
 N = 1001            # number of spatial grid points (NOTE: this must be an odd number for the finite difference method in cylindrical coordinates to work properly)
-total_sim_time = 5 * 10**(-8)   # total time simulator runs (modify)
-n_steps = 10000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
+total_sim_time = 1 * 10**(1)   # total time simulator runs (modify)
+n_steps = 140000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
 animate_every = 1000  # only render every Nth frame (keeps animation smooth)
 obs_phi = np.pi         # the toroidal angle at which you want to observe the diffusion of temperature in HSX in radians
 
@@ -25,12 +25,40 @@ epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
 
 # plasma parameters
 minor_r = 0.12       # minor radius of HSX (m)
-Te = 2500              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
+Te = 20              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
-B = Field_Strength_Finder(N, obs_phi)
+# B = Field_Strength_Finder(N, obs_phi)
+
+# Construct the file path
+b_field_filename = f"hsx_bfield_1d_phi_{obs_phi}.csv"
+b_field_path = os.path.join("..", "data", "perp_diffusion_solver", b_field_filename)
+
+# Read the file and extract the second column
+try:
+    with open(b_field_path, 'r') as f:
+        # Skip the first row (header)
+        next(f)
+        
+        # Extract the second column (index 1) and convert to float
+        # This assumes a standard comma-separated format
+        b_values = [float(line.split(',')[1]) for line in f]
+    
+    # Convert to a numpy array
+    B = np.array(b_values)
+    
+    print(f"Loaded B-field array from {b_field_filename}. Size: {len(B)}")
+
+except FileNotFoundError:
+    print(f"Error: {b_field_path} not found.")
+    # Fallback to a 1.0T field if file is missing
+    B = np.ones(1001) 
+except Exception as e:
+    print(f"An error occurred while reading the file: {e}")
+
+
 
 # Gaussian initial condition parameters
-bump_center = 0   # center of the Gaussian bump
+bump_center = 0.0  # center of the Gaussian bump
 bump_width = 0.05     # standard deviation (controls how wide the spike is) (modify)
 bump_height = Te / 10     # peak amplitude (modify)
 
@@ -51,7 +79,7 @@ if recalculate_data:
     # ─────────────────────────────────────────
     # GRID SETUP
     # ─────────────────────────────────────────
-
+    # s = np.linspace(0, minor_r, N)       # spatial grid along field line
     s = np.linspace(-minor_r, minor_r, N)       # spatial grid along field line
     center = len(s) // 2
     ds = s[1] - s[0]               # grid spacing
@@ -70,11 +98,12 @@ if recalculate_data:
     Lambda = 12 * np.pi * n_baseline * L_debye**3
     nu_ei = (n_baseline * (e**4) * np.log(Lambda)) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*T_initial[1:-1]*e)**(3/2))
     vth = np.sqrt((T_initial[1:-1] * e) / me)
-    r_larmor = (me**2 * vth**2) / (e**2 * B[1:-1])
+    r_larmor = (me * vth) / (e * B[1:-1])
     chi_perp = r_larmor**2 * nu_ei
 
     # Stability check: diffusion number must be <= 0.5 for explicit scheme
     r_init = np.max(chi_perp) * dt / ds**2
+    print(r_init)
     if r_init > 0.5:
         
         new_N_steps = math.ceil(np.max(chi_perp) * (total_sim_time / (0.5 * ds **2)) + 1)
@@ -86,13 +115,6 @@ if recalculate_data:
     else:
         print(f"Stability check passed: r = {r_init:.4f} (must be ≤ 0.5)")
 
-
-    # ─────────────────────────────────────────
-    # TIME STEPPING FUNCTION (explicit FTCS)
-    # ─────────────────────────────────────────
-    # Solves: dn/dt = 1/r(d/dr(r*chi(dT/dr)))
-    # Using forward-time, centered-space (FTCS) finite differences with insulated boundary conditions
-
     def step(T_fluc):
         
         """Advance n by one time step using cylindrical coordinate FTCS scheme with zero-flux boundaries."""
@@ -103,7 +125,7 @@ if recalculate_data:
         Lambda = 12 * np.pi * n_baseline * L_debye**3
         nu_ei = (n_baseline * (e**4) * np.log(Lambda)) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*T[1:-1]*e)**(3/2))
         vth = np.sqrt((T[1:-1] * e) / me)
-        r_larmor = (me**2 * vth**2) / (e**2 * B[1:-1])
+        r_larmor = (me * vth) / (e * B[1:-1])
         chi_perp = r_larmor**2 * nu_ei
         r = chi_perp * dt
         
@@ -111,11 +133,16 @@ if recalculate_data:
         
         # Interior points
         T_fluc_new[1:-1] = T_fluc[1:-1] + r * ((T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2 + (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds))
+        # T_fluc_new[1:-1] = T_fluc[1:-1] + 0.1 * ((T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2 + (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds))
         
+
         # Insulated Boundary conditions (we assume no heat transfer out of the plasma to the walls)
         T_fluc_new[0] = T_fluc_new[1]
         T_fluc_new[-1] = T_fluc_new[-2]
-        T_fluc_new[center] = T_fluc[center] + 2 * r * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds **2
+        T_fluc_new[center] = T_fluc[center] + 2 * r[center-1] * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds **2
+        # T_fluc_new[0] = T_fluc[0] + 4 * r[0] * (T_fluc[1] - T_fluc[0]) / ds **2
+
+        return T_fluc_new
 
     # ─────────────────────────────────────────
     # PRE-COMPUTE FRAMES FOR ANIMATION
@@ -133,7 +160,10 @@ if recalculate_data:
         
         # animation code
         if i % animate_every == 0:
+            # full_profile = np.concatenate([np.flip(T_current[1:]), T_current])
+            # full_s = np.concatenate([np.flip(-s[1:]), s])
             frames.append(T_current.copy())
+            # frames.append(full_profile.copy())
             times.append(i * dt)
         
         # calculate the next set of density values
@@ -194,43 +224,44 @@ if recalculate_data:
     ax.set_facecolor('#0f0f1a')
 
     # Plot initial condition as faint reference
-    ax.plot(s, T_initial, color='white', alpha=0.15, linewidth=1.2, linestyle='--', label='Initial condition')
+    ax.plot(s, frames[0], color='white', alpha=0.15, linewidth=1.2, linestyle='--', label='Initial condition')
 
-    # Main evolving line
-    line, = ax.plot(s, frames[0], color='#00cfff', linewidth=2.0, label='n(s, t)')
+    # Main evolving line (Direct mapping of s to frames)
+    line, = ax.plot(s, frames[0], color='#00cfff', linewidth=2.0, label='T(s, t)')
 
     # Filled area under curve
     fill = ax.fill_between(s, frames[0], alpha=0.15, color='#00cfff')
 
     # Labels and formatting
-    ax.set_xlabel('Distance along field line  s  (m)', color='white', fontsize=12)
-    ax.set_ylabel('Perturbation Temperature  T(r, phi, t)', color='white', fontsize=12)
+    ax.set_xlabel('Minor Radius (m)', color='white', fontsize=12)
+    ax.set_ylabel('Temperature (eV)', color='white', fontsize=12)
     ax.tick_params(colors='white')
     for spine in ax.spines.values():
         spine.set_edgecolor('#444466')
-    ax.set_xlim(0, 2*minor_r)
+    
+    ax.set_xlim(-minor_r, minor_r)
     ax.set_ylim(0.95*Te, 1.5*Te)
 
-    legend = ax.legend(loc='upper right', framealpha=0.2, labelcolor='white')
-    ax.set_title('1D Perpendicular Diffusion Across Field Lines', color='white', fontsize=13, pad=12)
+    ax.legend(loc='upper right', framealpha=0.2, labelcolor='white')
+    ax.set_title('1D Perpendicular Diffusion (Heat Flow)', color='white', fontsize=13, pad=12)
 
     def update(frame_idx):
         global fill
         y = frames[frame_idx]
 
+        # Update the line data directly
         line.set_ydata(y)
 
-        # Redraw fill
-        for coll in ax.collections:
-            coll.remove()
-        ax.fill_between(s, y, alpha=0.15, color='#00cfff')
+        # Redraw the fill area
+        fill.remove()
+        fill = ax.fill_between(s, y, alpha=0.15, color='#00cfff')
 
-        return line
+        return line, fill
 
     ani = animation.FuncAnimation(
         fig, update,
         frames=len(frames),
-        interval=1,       # milliseconds between frames
+        interval=30, # Increased interval to make it viewable
         blit=False
     )
     

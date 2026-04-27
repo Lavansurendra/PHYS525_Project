@@ -267,7 +267,7 @@ else:
                     frames[i].append(float(val))
                     
     except FileNotFoundError:
-        print(f"Error: Could not find '{path_name}'. Make sure it's in the same folder!")
+        print(f"Error: Could not find '{path_name}'. Make sure it's in the correct folder!")
         exit()
 
     # Convert standard Python lists to Numpy arrays for Matplotlib
@@ -344,7 +344,7 @@ else:
     # Save the animation as a GIF file using Pillow writer
     print(f"Saving animation to {path_name}... (this may take a minute or two)")
     ani.save(path_name, writer='pillow', fps=30)
-    print(f"GIF successfully saved to {gif_filename}!")
+    print(f"GIF successfully saved to {path_name}!")
 
     plt.tight_layout()
     plt.show()

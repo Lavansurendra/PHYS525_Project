@@ -24,7 +24,7 @@ from moose.grids import R3grid
 # NOTE: When other computers run this code they will have to change this path
 vmec_file_path = "/home/lavan/PHYS525/PHYS525_Project/wout_HSX_ar6.nc"
 
-# taking the VMEC output files found online and generating a continuous 3d mathematical model of the 
+# using the HSX mgrid model given by Dr. Dieter Boeyaert and generating a continuous 3d mathematical model of the 
 # magnetic field
 # the flare code run here can calculate the magnetic vector B to a fraction of a millimeter at any point
 # within the device using 3D interpolation
@@ -36,27 +36,17 @@ except Exception as e:
     print(f"Error loading MGRID data: {e}")
     sys.exit(1)
 
-# creating a boundary torus as a stopping condition for the magnetic field lines (placeholder until we 
-# can find the real HSX mesh)
-# vessel = model.Torosurf()
-
 # # generating 50 evenly spaced starting points along the major radius between 1.35 meters and 1.54 meters 
 # # to analyze how connection length changes as we move outward from the core of the plasma to the edge 
 R_array = np.linspace(1.35, 1.54, 50)
 # # fixing 50 starting points at z=0 and phi=0 so that all starting points are found on the outboard midplane of the plasma  
 Z_array = np.array([0.0])
-phi_val = 0.0              # A single Phi angle# # organizing the starting points to be provided to the flare code
-# start_points = np.column_stack((R_start, Z_start, Phi_start))
+phi_val = 0.0             
 
-
-
-
-# Generate the grid object and save it exactly how Fortran expects
+# generating the grid object and saving it in the form found in the documentation of FLARE
 my_grid = R3grid.rzmesh(R_array, Z_array, phi_val)
 my_grid.savetxt("grid.dat")
 print("Saved starting coordinates to 'grid.dat' using MOOSE R3grid.")
-
-# providing the flare simulation code with the magnetic field, boundary and starting points set up above
 
 # using the fieldline_connection function from the flare code to trace the magnetic field lines starting from the specified points
 # NOTE: since a field line that is perfectly confined will be traced forever this sets a maximum limit for which any field line will be traced

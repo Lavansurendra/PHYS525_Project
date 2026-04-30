@@ -83,7 +83,7 @@ FLARE does not read raw magnetic grid files via absolute paths in Python. It rel
 **Step 1: Create the directory**
 Run this command from anywhere in your WSL/Linux terminal:
 ```bash
-'mkdir -p ~/DATABASE/flare/HSX/mgrid
+mkdir -p ~/DATABASE/flare/HSX/mgrid
 ```
 
 **Step 2: Add the MGRID File**

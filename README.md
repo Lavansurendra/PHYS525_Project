@@ -107,7 +107,9 @@ amplitudes: [-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722
 dtype: 'magnetic_field'
 ```
 *NOTE: the files and configuration specifications used throughout this code were provided by Dr. Dieter Boeyaert*
+
 *NOTE: ensure the file name matches the file name you have in the corresponding folder*
+
 **Step 4: Add the 3D Vessel Mesh**
 Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```bash

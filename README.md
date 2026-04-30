@@ -68,10 +68,13 @@ mkdir build
 cd build
 
 # Configure CMake (Point to MOOSE targets in .local)
-cmake -DCMAKE_PREFIX_PATH=$HOME/.local -DPython3_EXECUTABLE=$(which python) ..
+cmake -DCMAKE_PREFIX_PATH=$HOME/.local -DCMAKE_INSTALL_PREFIX=$HOME/.local -DPython3_EXECUTABLE=$(which python) ..
 
 # Compile the physics engine
 make
+
+# Install the Python bindings locally
+make install
 
 # Return to the main project directory
 cd ../..
@@ -99,23 +102,22 @@ Paste the following configuration, which specifies the file name and the exact c
 [DEFAULT]
 
 [equi3d_mgrid]
-filename: mgrid_res2p5cm_180pln.nc
+filename: mgrid_res2p5cm_180pln 1.nc
 amplitudes: [-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,0.00,0.00,0.00,0.00,0.00,0.0000E+00]
 dtype: 'magnetic_field'
 ```
 *NOTE: the files and configuration specifications used throughout this code were provided by Dr. Dieter Boeyaert*
-
+*NOTE: ensure the file name matches the file name you have in the corresponding folder*
 **Step 4: Add the 3D Vessel Mesh**
 Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```bash
 nano ~/DATABASE/flare/HSX/mgrid/.boundary
 ```
 Paste the following text exactly as written:
-```ini
+```
 [DEFAULT]
 
-[firstwall]
-dtype: torosurf
+[torosurf]
 filename: vessel_hsx_flare.txt
 ```
 

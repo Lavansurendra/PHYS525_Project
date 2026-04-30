@@ -1,10 +1,8 @@
-# PHYS525 Project: Stellarator Parallel Connection Length & 1D Radial Diffusion
+# PHYS525 Project Part 1: Stellarator Parallel Connection Length & 1D Parallel Diffusion
 
-This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX) using the MGRID format. These $L_c$ values are used to set the length of the magnetic field line over which a diffusion equation describing the propagation of a disturbance in the density of the plasma is solved.
+This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX). These $L_c$ values are used to set the length of the magnetic field line over which a diffusion equation describing the propagation of a disturbance in the density of the plasma is solved.
 
 Because this project relies on the **FLARE** physics engine and the **MOOSE** framework (which must be compiled from source), you cannot simply `pip install` the requirements. 
-
-Please follow these exact instructions to replicate the Ubuntu/WSL environment.
 
 ## 1. System Requirements & System Packages
 You must be running Linux (or Ubuntu via WSL) with Miniconda installed. 
@@ -92,7 +90,7 @@ mkdir -p ~/DATABASE/flare/HSX/mgrid
 **Step 2: Add the MGRID File**
 Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln 1.nc` or another magnetic grid file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
-*NOTE: You can find the `mgrid_res2p5cm_180pln 1.nc` in the required files folder of this github!*
+*NOTE: You can find the `mgrid_res2p5cm_180pln 1.nc` in the required files folder of this github! It was provided to us by Dr. Dieter Boeyaert.*
 
 **Step 3: Create the `.bfield` Configuration**
 Inside the `mgrid` folder, create a hidden file named `.bfield`:
@@ -108,14 +106,14 @@ filename: mgrid_res2p5cm_180pln 1.nc
 amplitudes: [-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,-1.0722E+04,0.00,0.00,0.00,0.00,0.00,0.0000E+00]
 dtype: 'magnetic_field'
 ```
-*NOTE: the files and configuration specifications used throughout this code were provided by Dr. Dieter Boeyaert*
+*NOTE: the mgrid_res2p5cm_180pln 1.nc and vessel_hsx_flare.txt.txt files and configuration specifications used throughout this code were provided by Dr. Dieter Boeyaert*
 
 *NOTE: ensure the file name matches the file name you have in the corresponding folder*
 
 **Step 4: Add the 3D Vessel Mesh**
 Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
-*NOTE: You can find the `vessel_hsx_flare.txt` in the required files folder of this github!*
+*NOTE: You can find the `vessel_hsx_flare.txt` in the required files folder of this github! It was provided to us by Dr. Dieter Boeyaert.*
 
 Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```
@@ -130,9 +128,8 @@ filename: vessel_hsx_flare.txt
 ```
 
 ## 7. Running the Code
-You do not need to install MOOSE or FLARE into your Python environment. Our Python scripts handle this dynamically. As long as the folders are named `moose` and `flare` and sit in the root of this project directory, scripts will automatically append the build paths using `sys.path.insert()`.
 
-**1. Calculate Parallel Connection Lengths:**
+**Calculate Parallel Connection Lengths:**
 Because the FLARE C++ wrapper operates via file I/O, this script uses `moose.grids` to generate a `grid.dat` input file for the Fortran engine, executes the field-line trace against the 3D vessel mesh, and outputs data to `lc.dat`.
 ```
 python parallel_connection_length_finder.py
@@ -140,3 +137,22 @@ python parallel_connection_length_finder.py
 
 ## 8. Run the 1D Diffusion Equation Solver
 Set the parallel connection length, the desired electron temperature of the plasma in eV, the total amount of time you want the diffusion equation to be solved for, the number of spatial grid points you want the diffusion equation solved for along the magnetic field line with length equal to the parallel connection length, the number of time steps you want the diffusion equation solved for, and the baseline plasma density. Note that if your settings cause the diffusion equation solving method (Forward Time Center Space) to become numerically unstable, an error will be thrown suggesting a new number of timesteps to calculate over to make the solver stable. You can also modify the shape (amplitude, initial position, width) of the density disturbance. The solver will save the calculated density values for each time and spatial position along the field line to a CSV and then animate the propagation of the disturbance. Set the recalculate_data flag to be true if you want to recalculate the density at every point along the field line and at every time and then animate the new data. If you leave the flag set to be false, it will load data from an already saved csv and animate that instead.
+
+```
+python Par_Diffusion_eq_solver.py
+```
+
+
+# PHYS525 Project Part 2: Magnetic Field Strength and & 1D Perpendicular Diffusion
+
+This repository also contains the python scripts required to evaluate the magnetic field strength ($|B|$) at a number of positions for the Helically Symmetric eXperiment (HSX). These $|B|$ values are used to determine the Larmor radius which is used to determine the perpendicular thermal diffusivity which is a part of the 1D heat diffusion equation. Then this equation is used to describe the diffusion of a heat disturbance across the magnetic field lines of the stellerator and solved.
+
+The setup for the field strength calculation is the same as it was for the parallel connection length calculation. Please follow the numbered steps 1-6 above.
+
+## 8. Run the 1D Diffusion Equation Solver
+Running this solver will also run the Field_Strength_finder function in the field_strength_finder.py file which will automatically evaluate the magnetic field strength at specific points. The points are specified by setting the variable N in the 1D diffusion equation solver. You should also set desired electron temperature of the plasma in eV, the total amount of time you want the diffusion equation to be solved for, and the baseline plasma density. Note that if your settings cause the diffusion equation solving method (Forward Time Center Space) to become numerically unstable, an error will be thrown suggesting a new number of timesteps to calculate over to make the solver stable. You can also modify the shape (amplitude, initial position, width) of the initial heat disturbance. The solver will save the calculated heat values for each time and spatial position along the field line to a CSV and then animate the diffusion of the disturbance. Set the recalculate_data flag to be true if you want to recalculate the heat at every point along the field line and at every time and then animate the new data. If you leave the flag set to be false, it will load data from an already saved csv and animate that instead.
+
+
+```
+python Perp_Diffusion_eq_solver.py
+```

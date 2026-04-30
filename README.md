@@ -10,7 +10,7 @@ Please follow these exact instructions to replicate the Ubuntu/WSL environment.
 You must be running Linux (or Ubuntu via WSL) with Miniconda installed. 
 
 First, install the underlying C/Fortran compilers and the MPI/Math libraries. Open your terminal and run:
-```bash
+```
 sudo apt update
 sudo apt install build-essential cmake gfortran pkgconf \
                  libnetcdf-dev libnetcdff-dev \
@@ -20,7 +20,7 @@ sudo apt install build-essential cmake gfortran pkgconf \
 ## 2. Conda Environment Setup
 We use Conda for the base Python environment, but you must install `mpi4py` via `pip` to ensure it compiles against the system's OpenMPI and `gfortran` libraries. **Do not use Conda to install MPI.**
 
-```bash
+```
 # Create and activate the environment
 conda create --name PHYS525 python=3.10
 conda activate PHYS525
@@ -35,7 +35,7 @@ pip install mpi4py
 ## 3. Clone the Sub-Repositories
 Make sure you are in the main project folder. You need to pull down the source code for Dr. Frerichs' MOOSE and FLARE libraries. 
 
-```bash
+```
 git clone https://gitlab.com/hfrerichs/moose.git
 git clone https://gitlab.com/hfrerichs/flare.git
 ```
@@ -43,7 +43,7 @@ git clone https://gitlab.com/hfrerichs/flare.git
 ## 4. Compile the MOOSE Framework
 MOOSE must be compiled first and "installed" into a local hidden directory so FLARE can find its configuration blueprints.
 
-```bash
+```
 cd moose
 mkdir build
 cd build
@@ -62,7 +62,7 @@ cd ../..
 ## 5. Compile the FLARE Physics Engine
 Now you must build FLARE and explicitly point it to the local MOOSE installation you just created.
 
-```bash
+```
 cd flare
 mkdir build
 cd build
@@ -85,20 +85,22 @@ FLARE does not read raw magnetic grid files via absolute paths in Python. It rel
 
 **Step 1: Create the directory**
 Run this command from anywhere in your WSL/Linux terminal:
-```bash
+```
 mkdir -p ~/DATABASE/flare/HSX/mgrid
 ```
 
 **Step 2: Add the MGRID File**
-Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln.nc` or another magnetic grid file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
+Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln 1.nc` or another magnetic grid file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
+
+*NOTE: You can find the `mgrid_res2p5cm_180pln 1.nc` in the required files folder of this github!*
 
 **Step 3: Create the `.bfield` Configuration**
 Inside the `mgrid` folder, create a hidden file named `.bfield`:
-```bash
+```
 nano ~/DATABASE/flare/HSX/mgrid/.bfield
 ```
 Paste the following configuration, which specifies the file name and the exact coil current amplitudes (in Amperes) required to generate the QHS state:
-```ini
+```
 [DEFAULT]
 
 [equi3d_mgrid]
@@ -111,8 +113,12 @@ dtype: 'magnetic_field'
 *NOTE: ensure the file name matches the file name you have in the corresponding folder*
 
 **Step 4: Add the 3D Vessel Mesh**
-Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. Create a `.boundary` configuration file to define the 3D `torosurf` shape:
-```bash
+Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
+
+*NOTE: You can find the `vessel_hsx_flare.txt` in the required files folder of this github!*
+
+Create a `.boundary` configuration file to define the 3D `torosurf` shape:
+```
 nano ~/DATABASE/flare/HSX/mgrid/.boundary
 ```
 Paste the following text exactly as written:
@@ -128,7 +134,7 @@ You do not need to install MOOSE or FLARE into your Python environment. Our Pyth
 
 **1. Calculate Parallel Connection Lengths:**
 Because the FLARE C++ wrapper operates via file I/O, this script uses `moose.grids` to generate a `grid.dat` input file for the Fortran engine, executes the field-line trace against the 3D vessel mesh, and outputs data to `lc.dat`.
-```bash
+```
 python parallel_connection_length_finder.py
 ```
 

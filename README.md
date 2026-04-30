@@ -36,8 +36,8 @@ pip install mpi4py
 Make sure you are in the main project folder. You need to pull down the source code for Dr. Frerichs' MOOSE and FLARE libraries. 
 
 ```bash
-git clone [https://gitlab.com/hfrerichs/moose.git](https://gitlab.com/hfrerichs/moose.git)
-git clone [https://gitlab.com/hfrerichs/flare.git](https://gitlab.com/hfrerichs/flare.git)
+git clone https://gitlab.com/hfrerichs/moose.git
+git clone https://gitlab.com/hfrerichs/flare.git
 ```
 
 ## 4. Compile the MOOSE Framework

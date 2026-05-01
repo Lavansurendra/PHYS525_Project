@@ -12,9 +12,9 @@ from field_strength_finder import Field_Strength_Finder
 # ─────────────────────────────────────────
 
 # simulation parameters
-N = 1001            # number of spatial grid points (NOTE: this must be an odd number for the finite difference method in cylindrical coordinates to work properly)
-total_sim_time = 1 * 20**(1)   # total time simulator runs (modify)
-n_steps = 58000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
+N = 1000            # number of spatial grid points (NOTE: this must be an even number for the finite difference method in cylindrical coordinates to work properly)
+total_sim_time = 2 * 10**(1)   # total time simulator runs (modify)
+n_steps = 392000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
 animate_every = 1000  # only render every Nth frame (keeps animation smooth)
 obs_phi = np.pi         # the toroidal angle at which you want to observe the diffusion of temperature in HSX in radians
 
@@ -25,52 +25,16 @@ epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
 
 # plasma parameters
 minor_r = 0.12       # minor radius of HSX (m)
-Te = 1000              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
+Te = 10              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
-# B = Field_Strength_Finder(N, obs_phi)
-
-# Construct the file path
-b_field_filename = f"hsx_bfield_1d_phi_{obs_phi}.csv"
-b_field_path = os.path.join("..", "data", "perp_diffusion_solver", b_field_filename)
-
-# Read the file and map it symmetrically
-try:
-    with open(b_field_path, 'r') as f:
-        # Skip the header row
-        next(f)
-        
-        # Extract BOTH columns: [radius, b_field]
-        # This converts the entire file into a 2D numpy array
-        csv_raw = np.array([[float(val) for val in line.split(',')] for line in f])
-    
-    # Extract the individual columns
-    csv_radii = csv_raw[:, 0]  # First column: 0 to 0.12m
-    csv_values = csv_raw[:, 1] # Second column: Magnetic field in T
-    
-    # INTERPOLATION: Map the 0->0.12m data onto your -0.12->0.12m grid 's'
-    # np.abs(s) tells the computer that -0.05m and +0.05m should 
-    # both look at the 0.05m value in the CSV.
-    B = np.interp(np.abs(s), csv_radii, csv_values)
-    
-    print(f"Loaded and symmetrically mapped B-field from {b_field_filename}.")
-    print(f"B-field shape: {len(B)} | Max B: {np.max(B):.4f}T")
-
-except FileNotFoundError:
-    print(f"Error: {b_field_path} not found.")
-    # Fallback to a 1.0T field across all N points
-    B = np.ones(N) 
-except Exception as e:
-    print(f"An error occurred while reading the file: {e}")
-
-
+B = Field_Strength_Finder(N, obs_phi)
 
 # Gaussian initial condition parameters
-bump_center = 0.0  # center of the Gaussian bump
-bump_width = 0.008     # standard deviation (controls how wide the spike is) (modify)
+bump_center = 0   # center of the Gaussian bump
+bump_width = 0.03     # standard deviation (controls how wide the spike is) (modify)
 bump_height = Te / 10     # peak amplitude (modify)
 
 d_min_thres = (1/np.e) * bump_height + Te   # disturbance height at center of disturbance used to measure how fast decay dissipates
-print(d_min_thres)
 # if the boolean is set to True the code will run the simulation, save the data to a csv file, and animate the diffusion. if the boolean is set to False the code will skip the simulation and animate using the data in the csv file 
 recalculate_data = True
 
@@ -86,34 +50,18 @@ if recalculate_data:
     # ─────────────────────────────────────────
     # GRID SETUP
     # ─────────────────────────────────────────
-    # s = np.linspace(0, minor_r, N)       # spatial grid along field line
-    s = np.linspace(-minor_r, minor_r, N)       # spatial grid along field line
-    center = len(s) // 2
+
+    pre_s = np.linspace(0, minor_r, N//2 + 1)       # spatial grid along field line
+    pre_s = pre_s[1:]
+    # s = np.linspace(-minor_r, minor_r, N)       # spatial grid along field line
+    s = np.zeros(N)
+    s[0:N//2] = -pre_s[::-1].copy()
+    s[N//2:] = pre_s
+    # center = len(s) // 2
+    l_center = int(len(s) / 2 - 1)
+    r_center = int(l_center + 1)
     ds = s[1] - s[0]               # grid spacing
     dt = total_sim_time / n_steps         # time step in seconds (modify)
-
-    # b_field_filename = f"hsx_bfield_1d_phi_{obs_phi}.csv"
-    # b_field_path = os.path.join("..", "data", "perp_diffusion_solver", b_field_filename)
-
-    # try:
-    #     with open(b_field_path, 'r') as f:
-    #         next(f) # Skip header
-    #         csv_raw = np.array([[float(val) for val in line.split(',')] for line in f])
-            
-    #     csv_radii = csv_raw[:, 0]
-    #     csv_values = csv_raw[:, 1]
-        
-    #     # 's' is now safely defined right above!
-    #     B = np.interp(np.abs(s), csv_radii, csv_values)
-        
-    #     print(f"Loaded and symmetrically mapped B-field from {b_field_filename}.")
-        
-    # except FileNotFoundError:
-    #     print(f"Error: {b_field_path} not found.")
-    #     B = np.ones(N) 
-    # except Exception as e:
-    #     print(f"An error occurred while reading the file: {e}")
-
 
     # ─────────────────────────────────────────
     # INITIAL CONDITIONS
@@ -148,39 +96,6 @@ if recalculate_data:
     #         """Advance T_fluc by one time step using conservative Finite Volume on a full 1D diameter."""
     #         T = Te + T_fluc
 
-    #         # 1. Calculate physics for the FULL array (size N) to avoid indexing mismatches
-    #         L_debye = np.sqrt((epsilon * T) / (n_baseline * e**2))
-    #         Lambda = 12 * np.pi * n_baseline * L_debye**3
-    #         nu_ei = (n_baseline * (e**4) * np.log(np.maximum(Lambda, 1.01))) / (3 * np.pi**(3/2) * epsilon**2 * me**(1/2) * (2*T*e)**(3/2))
-    #         vth = np.sqrt((T * e) / me)
-    #         r_larmor = (me * vth) / (e * B)
-    #         chi_perp = r_larmor**2 * nu_ei
-            
-    #         T_fluc_new = T_fluc.copy()
-
-    #         # 2. Calculate fluxes BETWEEN grid nodes
-    #         # Use absolute value because the area of a cylindrical shell is proportional to radius |s|
-    #         s_mid = np.abs(0.5 * (s[:-1] + s[1:]))
-    #         chi_mid = 0.5 * (chi_perp[:-1] + chi_perp[1:])
-
-    #         # Heat flux crossing the interface of each shell
-    #         flux = s_mid * chi_mid * (T_fluc[1:] - T_fluc[:-1]) / ds
-
-    #         # 3. Update Interior points (Vectorized, skipping boundaries and exact center)
-    #         # Create an array of indices for the left half and right half, skipping index 500
-    #         interior_idx = np.concatenate([np.arange(1, center), np.arange(center + 1, N - 1)])
-            
-    #         T_fluc_new[interior_idx] = T_fluc[interior_idx] + (dt / (np.abs(s[interior_idx]) * ds)) * (flux[interior_idx] - flux[interior_idx-1])
-
-    #         # 4. Update the exact Center (s=0)
-    #         # To avoid dividing by zero, we use the cylindrical limit at the origin
-    #         T_fluc_new[center] = T_fluc[center] + 2 * chi_perp[center] * dt * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds**2
-
-    #         # 5. Insulated Boundary Conditions
-    #         T_fluc_new[0] = T_fluc_new[1]
-    #         T_fluc_new[-1] = T_fluc_new[-2]
-
-    #         return T_fluc_new
     def step(T_fluc):
         
         """Advance n by one time step using cylindrical coordinate FTCS scheme with zero-flux boundaries."""
@@ -198,15 +113,21 @@ if recalculate_data:
         T_fluc_new = T_fluc.copy()
         
         # Interior points
+        # test = (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds)
+        # test2 = (T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2
         T_fluc_new[1:-1] = T_fluc[1:-1] + r * ((T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2 + (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds))
         # T_fluc_new[1:-1] = T_fluc[1:-1] + 0.1 * ((T_fluc[2:] - 2*T_fluc[1:-1] + T_fluc[:-2]) / ds **2 + (1/s[1:-1]) * (T_fluc[2:] - T_fluc[:-2]) / (2*ds))
         
 
         # Insulated Boundary conditions (we assume no heat transfer out of the plasma to the walls)
-        T_fluc_new[0] = T_fluc_new[1]
-        T_fluc_new[-1] = T_fluc_new[-2]
-        T_fluc_new[center] = T_fluc[center] + 2 * r[center-1] * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds **2
-        # T_fluc_new[0] = T_fluc[0] + 4 * r[0] * (T_fluc[1] - T_fluc[0]) / ds **2
+        # T_fluc_new[0] = T_fluc_new[1]
+        # T_fluc_new[-1] = T_fluc_new[-2]
+        T_fluc_new[0] = (4/3) * T_fluc_new[1] - (1/3) * T_fluc_new[2]
+        T_fluc_new[-1] = (4/3) * T_fluc_new[-2] - (1/3) * T_fluc_new[-3]
+        # T_fluc_new[center] = T_fluc[center] + 2 * r[center-1] * (T_fluc[center+1] - 2*T_fluc[center] + T_fluc[center-1]) / ds **2
+        T_fluc_new[r_center] = T_fluc_new[r_center+1]
+        T_fluc_new[l_center] = T_fluc_new[r_center]
+        # T_fluc_new[l_center] = (3 * T_fluc_new[r_center] - 4 * T_fluc_new[r_center+1] + T_fluc_new[r_center+2] - T_fluc_new[l_center-2] + 4 * T_fluc_new[l_center-1]) / 3
 
         return T_fluc_new
 
@@ -305,7 +226,6 @@ if recalculate_data:
     ax.tick_params(colors='white')
     for spine in ax.spines.values():
         spine.set_edgecolor('#444466')
-    
     ax.set_xlim(-minor_r, minor_r)
     ax.set_ylim(0.95*Te, 1.5*Te)
 

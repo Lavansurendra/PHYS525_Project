@@ -1,4 +1,3 @@
-
 # importing neccesary libraries for running Fortran/C++ files set up by make command in moose and flare directories
 import sys                  # Lets us modify how Python searches for files
 import os                   # Lets us interact with the computer's file system (folders/paths)
@@ -9,12 +8,6 @@ import matplotlib.pyplot as plt  # The standard library for plotting graphs
 import csv                  # Lets us read and write spreadsheet files
 
 def Field_Strength_Finder(num_minor_radius_points, phi_angle):
-    # specifying the location of the .so files for flare and moose code 
-        # NOTE: the insert command allows us to specify what order the directories should be searched in when we run the flare import
-        #       since we specified an index of 0 this command ensures that the specified directories are searched first
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'moose', 'src', 'python')))
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'flare', 'src', 'python')))
-
 
     # creating a temporary system variable called 'DATABASE' pointing to your ~/DATABASE folder.
     os.environ["DATABASE"] = os.path.expanduser("~/DATABASE")
@@ -47,10 +40,8 @@ def Field_Strength_Finder(num_minor_radius_points, phi_angle):
     R_axis = 1.20   
 
     # defining the minor radius (user specified number of points)
-        # NOTE: from the hsx website we see that the average plasma minor radius is 0.12 meters. However since HSX is very twisted the plasma is not a perfect cylinder
-        # correspondingly at at some toroidal angles the cross section of the plasma can be wider than 0.12 meters
-        # to ensure we capture the full plasma cross section we will calculate |B| up to a minor radius of 0.15 meters
-    r_grid = np.linspace(0.0, 0.15, num_minor_radius_points)
+        # NOTE: from the hsx website we see that the average plasma minor radius is 0.12 meters.
+    r_grid = np.linspace(0.0, 0.12, num_minor_radius_points)
 
     # creating an empty 1D array to store our calculated field strengths
     B_strength = np.zeros(len(r_grid))

@@ -6,12 +6,6 @@ import os # Lets us interact with the computer's file system (folders/paths)
 import numpy as np # The standard library for heavy array math
 import matplotlib.pyplot as plt # The standard library for plotting graphs
 
-# specifying the location of the .so files for flare and moose code 
-    # NOTE: the insert command allows us to specify what order the directories should be searched in when we run the flare import
-    #       since we specified an index of 0 this command ensures that the specified directories are searched first
-sys.path.insert(0, os.path.expanduser('~/PHYS525/PHYS525_Project/moose/python'))
-sys.path.insert(0, os.path.expanduser('~/PHYS525/PHYS525_Project/flare/python'))
-
 # creating a temporary system variable called 'DATABASE' pointing to your ~/DATABASE folder.
 os.environ["DATABASE"] = os.path.expanduser("~/DATABASE")
 

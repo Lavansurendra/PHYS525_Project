@@ -1,4 +1,4 @@
-<img width="2400" height="1500" alt="image" src="https://github.com/user-attachments/assets/ab879f1b-bec7-4966-b0a3-ad91401ab2dd" /># PHYS525 Project Part 1: Stellarator Parallel Connection Length & 1D Parallel Diffusion
+# PHYS525 Project Part 1: Stellarator Parallel Connection Length & 1D Parallel Diffusion
 
 This repository contains the Python scripts required to simulate 3D magnetic field line parallel connection lengths ($L_c$) for the Helically Symmetric eXperiment (HSX). These $L_c$ values are used to set the length of the magnetic field line over which a diffusion equation describing the propagation of a disturbance in the density of the plasma is solved.
 
@@ -141,7 +141,6 @@ Set the parallel connection length, the desired electron temperature of the plas
 ```
 python Par_Diffusion_eq_solver.py
 ```
-
 
 # PHYS525 Project Part 2: Magnetic Field Strength and & 1D Perpendicular Diffusion
 

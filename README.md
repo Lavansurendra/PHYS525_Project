@@ -90,7 +90,7 @@ mkdir -p ~/DATABASE/flare/HSX/mgrid
 **Step 2: Add the MGRID File**
 Place the massive 3D magnetic grid file (`mgrid_res2p5cm_180pln 1.nc` or another magnetic grid file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
-*NOTE: You can find the `mgrid_res2p5cm_180pln 1.nc` in the required files folder of this github! It was provided to us by Dr. Dieter Boeyaert.*
+*NOTE: The `mgrid_res2p5cm_180pln 1.nc` file was provided to us by Dr. Dieter Boeyaert.*
 
 **Step 3: Create the `.bfield` Configuration**
 Inside the `mgrid` folder, create a hidden file named `.bfield`:
@@ -113,7 +113,7 @@ dtype: 'magnetic_field'
 **Step 4: Add the 3D Vessel Mesh**
 Place the vacuum vessel coordinate file (`vessel_hsx_flare.txt` or another coordinate file if you have one) directly into the `~/DATABASE/flare/HSX/mgrid/` folder. 
 
-*NOTE: You can find the `vessel_hsx_flare.txt` in the required files folder of this github! It was provided to us by Dr. Dieter Boeyaert.*
+*NOTE: The `vessel_hsx_flare.txt` file was provided to us by Dr. Dieter Boeyaert.*
 
 Create a `.boundary` configuration file to define the 3D `torosurf` shape:
 ```

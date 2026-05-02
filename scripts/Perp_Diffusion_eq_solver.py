@@ -14,9 +14,9 @@ from field_strength_finder import Field_Strength_Finder
 # simulation parameters
 N = 1000            # number of spatial grid points (NOTE: this must be an even number for the finite difference method in cylindrical coordinates to work properly)
 total_sim_time = 2 * 10**(1)   # total time simulator runs (modify)
-n_steps = 392000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
-animate_every = 1000  # only render every Nth frame (keeps animation smooth)
-obs_phi = np.pi         # the toroidal angle at which you want to observe the diffusion of temperature in HSX in radians
+n_steps = 37000   # total number of time steps to simulate (chosen values: {3.33: [12000, 19000, 27000, 37000, 49000, 62000], })
+animate_every = 2000  # only render every Nth frame (keeps animation smooth)
+obs_phi = 0.8         # the toroidal angle at which you want to observe the diffusion of temperature in HSX in radians
 
 # constants
 me = 9.11 * 10**(-31)    # electron mass in kg
@@ -25,13 +25,13 @@ epsilon = 8.85 * 10**(-12)   # permittivity of free space (check units)
 
 # plasma parameters
 minor_r = 0.12       # minor radius of HSX (m)
-Te = 10              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
+Te = 20              # electron temperature in eV (chosen values: [5,6,7,8,9,10])
 n_baseline = 2 * 10**17      # baseline plasma density in m^(-3)
 B = Field_Strength_Finder(N, obs_phi)
 
 # Gaussian initial condition parameters
 bump_center = 0   # center of the Gaussian bump
-bump_width = 0.03     # standard deviation (controls how wide the spike is) (modify)
+bump_width = 0.008     # standard deviation (controls how wide the spike is) (modify)
 bump_height = Te / 10     # peak amplitude (modify)
 
 d_min_thres = (1/np.e) * bump_height + Te   # disturbance height at center of disturbance used to measure how fast decay dissipates
@@ -39,10 +39,10 @@ d_min_thres = (1/np.e) * bump_height + Te   # disturbance height at center of di
 recalculate_data = True
 
 # this variable should be set to the name of the csv you want to create or save to if the recalculate_data boolean is set to True, or the name of the csv you want to read from if the recalculate_data boolean is set to False
-csv_filename = "dif_151_5.csv"
+csv_filename = "dif_phi_0_8_20.csv"
 
 # this variable should be set to the name of the gif you want to create corresponding to the animation
-gif_filename = "dif_151_5_animation.gif"
+gif_filename = "dif_phi_0_8_20_animation.gif"
 
 # only recalculate data if the boolean is set to True, otherwise just read the data from the csv file and skip the simulation
 

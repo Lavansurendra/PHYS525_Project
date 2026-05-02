@@ -62,15 +62,15 @@ if os.path.exists('lc.dat'):
 # plotting the distances of each of the field lines starting from our specified starting R coordinates to see where each one collides with the boundary
     plt.figure(figsize=(8, 5))
     plt.plot(R_array, L_c, marker='o', linestyle='-')
-    plt.title("HSX Parallel Connection Length (First Wall)")
+    plt.title("HSX Parallel Connection Length")
     plt.xlabel("Starting Radius R (m)")
     plt.ylabel("Connection Length L_c (m)")
     plt.yscale('log') 
     plt.grid(True)
 
     #  creating a data folder if it doesn't already exist
-    output_folder = os.path.join("..", "data", "diffusion_solver")
-    plot_filename = os.path.join(output_folder, f"HSX_Connection_Length_1.png")
+    output_folder = os.path.join("..", "data", "par_diffusion_solver")
+    plot_filename = os.path.join(output_folder, f"HSX_Connection_Length.png")
     plt.savefig(plot_filename, dpi=300)
 
 else:
